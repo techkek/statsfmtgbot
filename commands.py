@@ -3,13 +3,20 @@ import re
 import requests
 from database import get_user_language, get_user_username, set_user_data
 from language import get_text
-from api_client import get_all_items, format_item_info, get_first_last_listen, get_total_listening_time, get_complex_recommendations
+from api_client import (
+    get_all_items,
+    format_item_info,
+    get_first_last_listen,
+    get_total_listening_time,
+    get_complex_recommendations,
+)
 from utils import send_long_message
 import traceback
 
 
 def register_commands(bot):
     try:
+
         @bot.message_handler(commands=["start"])
         def send_welcome(message):
             lang = get_user_language(message.chat.id)
@@ -35,15 +42,17 @@ def register_commands(bot):
                 bot.reply_to(message, get_text(lang, "set_username_first"))
                 return
 
-            temp_message = bot.send_message(chat_id, get_text(lang, "generating_random_artist"))
+            temp_message = bot.send_message(
+                chat_id, get_text(lang, "generating_random_artist")
+            )
 
             all_artists = get_all_items(username, "", "artists")
 
             if all_artists:
                 random_artist = random.choice(all_artists)
                 artist_info = format_item_info(random_artist, "artists", username)
-                
-                #TODO languages
+
+                # TODO languages
                 response = f"[{artist_info['name']}](https://stats.fm/artist/{artist_info['stats_id']})\n"
                 response += f"Streams: {artist_info['streams']} - #{artist_info['position']} most played artist overall\n"
                 response += f"First listen: {get_first_last_listen(username, 'artists', artist_info['stats_id'], 'first')}\n"
@@ -52,10 +61,22 @@ def register_commands(bot):
 
                 bot.delete_message(chat_id, temp_message.message_id)
 
-                if artist_info["image"] != "N/A":
+                image = artist_info.get("image")
+
+                if(isinstance(image, str)):
+                    if image != "N/A":
+                        bot.send_photo(
+                            chat_id,
+                            image,
+                            caption=response,
+                            parse_mode="Markdown",
+                        )
+                    else:
+                        bot.send_message(chat_id, response, parse_mode="Markdown")
+                elif image["image"] != "N/A":
                     bot.send_photo(
                         chat_id,
-                        artist_info["image"],
+                        image["image"],
                         caption=response,
                         parse_mode="Markdown",
                     )
@@ -75,7 +96,9 @@ def register_commands(bot):
                 bot.reply_to(message, get_text(lang, "set_username_first"))
                 return
 
-            temp_message = bot.send_message(chat_id, get_text(lang, "generating_random_album"))
+            temp_message = bot.send_message(
+                chat_id, get_text(lang, "generating_random_album")
+            )
 
             all_albums = get_all_items(username, "", "albums")
 
@@ -83,7 +106,7 @@ def register_commands(bot):
                 random_album = random.choice(all_albums)
                 album_info = format_item_info(random_album, "albums", username)
 
-                #TODO languages
+                # TODO languages
 
                 response = f"[{album_info['title']}](https://stats.fm/album/{album_info['stats_id']})\n"
                 response += f"Artist: {album_info['artist']}\n"
@@ -126,7 +149,7 @@ def register_commands(bot):
                 random_track = random.choice(all_tracks)
                 track_info = format_item_info(random_track, "tracks", username)
 
-                #TODO languages
+                # TODO languages
 
                 response = f"[{track_info['title']}](https://stats.fm/track/{track_info['stats_id']})\n"
                 response += f"**{track_info['artist']}**\n"
@@ -162,6 +185,7 @@ def register_commands(bot):
             else:
                 bot.delete_message(chat_id, temp_message.message_id)
                 bot.reply_to(message, get_text(lang, "no_tracks_found"))
+
         @bot.message_handler(commands=["random_genre"])
         def send_random_genre(message):
             chat_id = message.chat.id
@@ -182,12 +206,11 @@ def register_commands(bot):
                 random_genre = random.choice(all_genres)
                 genre_info = format_item_info(random_genre, "genres", username)
 
-                #TODO languages
+                # TODO languages
 
                 response = f"[{genre_info['name']}](https://stats.fm/genre/{genre_info['name']})\n"
                 response += f"Position: #{genre_info['position']}\n"
                 response += f"Streams: {genre_info['streams']}\n"
-
 
                 bot.delete_message(chat_id, temp_message.message_id)
                 bot.send_message(chat_id, response, parse_mode="Markdown")
@@ -207,7 +230,9 @@ def register_commands(bot):
                 else:
                     bot.reply_to(
                         message,
-                        get_text(get_user_language(message.chat.id), "invalid_language"),
+                        get_text(
+                            get_user_language(message.chat.id), "invalid_language"
+                        ),
                     )
             except IndexError:
                 bot.reply_to(
@@ -294,6 +319,7 @@ def register_commands(bot):
             else:
                 bot.delete_message(chat_id, temp_message.message_id)
                 bot.reply_to(message, get_text(lang, "no_items_found"))
+
         @bot.message_handler(commands=["recommend"])
         def send_recommendations(message):
             chat_id = message.chat.id
@@ -304,25 +330,30 @@ def register_commands(bot):
                 bot.reply_to(message, get_text(lang, "set_username_first"))
                 return
 
-            temp_message = bot.send_message(chat_id, get_text(lang, "generating_recommendations"))
+            temp_message = bot.send_message(
+                chat_id, get_text(lang, "generating_recommendations")
+            )
 
             try:
-                recommended_tracks, recommended_albums = get_complex_recommendations(username)
-                
+                recommended_tracks, recommended_albums = get_complex_recommendations(
+                    username
+                )
+
                 response = f"{get_text(lang, 'recommended_tracks')}:\n\n"
                 for i, track in enumerate(recommended_tracks, 1):
                     response += f"{i}.[{track['name']}](https://stats.fm/track/{track['id']}) - [{track['artists'][0]['name']}](https://stats.fm/artist/{track['artists'][0]['id']})\n"
-                
+
                 response += f"\n{get_text(lang, 'recommended_albums')}:\n\n"
                 for i, album in enumerate(recommended_albums, 1):
                     response += f"{i}.[{album['name']}](https://stats.fm/album/{album['id']}) - [{album['artists'][0]['name']}](https://stats.fm/artist/{album['artists'][0]['id']})\n"
-                
+
                 bot.delete_message(chat_id, temp_message.message_id)
                 send_long_message(bot, chat_id, response, parse_mode="Markdown")
             except Exception as e:
                 bot.delete_message(chat_id, temp_message.message_id)
                 bot.reply_to(message, get_text(lang, "error_recommendations"))
                 print(f"Error getting recommendations: {e} - {traceback.format_exc()}")
+
     except Exception as e:
         print(f"Error registering commands: {e} - {traceback.format_exc()}")
         raise e
