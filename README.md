@@ -41,8 +41,7 @@ StatsFMTGBot is a Telegram bot that interacts with stats.fm to provide users wit
    ```
 
 3. Configure the bot:
-   - Rename `config.py.example` to `config.py`.
-   - Update the configuration file with your bot token and other settings.
+   - Edit config.py with your token
 
 ## Running the Bot
 
@@ -53,8 +52,7 @@ python bot.py
 
 Or using Docker:
 ```bash
-docker build -t statsfmtgbot .
-docker run -d statsfmtgbot
+docker compose build -d --build
 ```
 
 ## License
