@@ -1,5 +1,9 @@
 import os
-from cryptography.fernet import Fernet
+from Crypto.Cipher import AES
+from Crypto.Protocol.KDF import scrypt
+from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
+import base64
 
 # Bot settings
 BOT_TOKEN = "<your bot token>"
@@ -35,20 +39,32 @@ TG_BOT_BETA_USERNAME = "statsfmtgbetabot" # Telegram Bot beta username
 
 # Encryption settings
 KEY_FILE = "./storage/encryption_key.key"  # Path to the encryption key file
+def generate_key():
+    return get_random_bytes(32)  # AES-256 key size
+
 def load_key():
     if not os.path.exists(KEY_FILE):
-        key = Fernet.generate_key()
+        key = generate_key()
         with open(KEY_FILE, "wb") as key_file:
             key_file.write(key)
-        if ENV == "development" or ENV == "debug":
-            print(f"Generated new encryption key and saved to {KEY_FILE}")
     else:
         with open(KEY_FILE, "rb") as key_file:
             key = key_file.read()
     return key
 
 ENCRYPTION_KEY = load_key()
-cipher_suite = Fernet(ENCRYPTION_KEY)
+
+def encrypt_message(message):
+    cipher = AES.new(ENCRYPTION_KEY, AES.MODE_GCM)
+    ciphertext, tag = cipher.encrypt_and_digest(pad(message.encode(), AES.block_size))
+    return base64.b64encode(cipher.nonce + tag + ciphertext).decode()
+
+def decrypt_message(encrypted_message):
+    data = base64.b64decode(encrypted_message.encode())
+    nonce, tag, ciphertext = data[:16], data[16:32], data[32:]
+    cipher = AES.new(ENCRYPTION_KEY, AES.MODE_GCM, nonce=nonce)
+    decrypted = unpad(cipher.decrypt_and_verify(ciphertext, tag), AES.block_size)
+    return decrypted.decode()
 
 # Available settings in the menu
 AVAILABLE_SETTINGS = {

@@ -1,5 +1,5 @@
 import sqlite3, json
-from config import DATABASE_NAME, cipher_suite
+from config import DATABASE_NAME, encrypt_message, decrypt_message
 
 conn = sqlite3.connect(DATABASE_NAME, check_same_thread=False)
 
@@ -53,7 +53,7 @@ def get_user_setting(chat_id, setting_name, default_value):
 def set_spotify_token(chat_id, token):
     with conn:
         c = conn.cursor()
-        encrypted_token = cipher_suite.encrypt(json.dumps(token).encode())
+        encrypted_token = encrypt_message(json.dumps(token))
         c.execute("UPDATE users SET spotify_token = ? WHERE chat_id = ?", (encrypted_token, chat_id))
         conn.commit()
         set_user_setting(chat_id, "spotify-connected", True)
@@ -64,7 +64,7 @@ def get_spotify_token(chat_id):
         c.execute("SELECT spotify_token FROM users WHERE chat_id = ?", (chat_id,))
         result = c.fetchone()
         if result and result[0]:
-            decrypted_token = cipher_suite.decrypt(result[0])
+            decrypted_token = decrypt_message(result[0])
             return json.loads(decrypted_token)
         return None
 
