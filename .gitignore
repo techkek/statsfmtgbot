@@ -2,3 +2,4 @@ user_data.db
 __pycache__/
 encryption_key.key
 config.py
+venv/
