@@ -168,7 +168,16 @@ Il repository è open source e disponibile su <a href="https://github.com/techke
 }
 
 
-def get_text(lang, key, format=None):
-    if format != None:
-        return languages[lang][key].format(format)
-    return languages[lang][key]
+def get_text(lang, key, *args):
+    try:
+        text = languages.get(lang, languages['en']).get(key, f"Missing text for key: {key}")
+        if args:
+            try:
+                return text.format(*args)
+            except (IndexError, KeyError) as e:
+                print(f"Error formatting text for key '{key}': {str(e)}")
+                return text
+        return text
+    except Exception as e:
+        print(f"Unexpected error in get_text: {str(e)}")
+        return f"Error retrieving text for key: {key}"

@@ -1,6 +1,5 @@
 import os
 from Crypto.Cipher import AES
-from Crypto.Protocol.KDF import scrypt
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 import base64
@@ -30,7 +29,7 @@ HOST_LOCAL = "localhost"  # Localhost URL for beta testing
 PORT_LOCAL = 8888  # Localhost port for beta testing
 
 SPOTIFY_REDIRECT_URI = (
-    'https://+' + (HOST if ENV == 'production' else HOST_LOCAL)+ "/callback"
+    'https://' + (HOST if ENV == 'production' else HOST_LOCAL) + "/callback"
 )  # Redirect URI for the Spotify API, must be accessible from the internet if you are not hosting the bot locally
 
 # Telegram Bot settings
@@ -39,32 +38,45 @@ TG_BOT_BETA_USERNAME = "statsfmtgbetabot" # Telegram Bot beta username
 
 # Encryption settings
 KEY_FILE = "./storage/encryption_key.key"  # Path to the encryption key file
+
 def generate_key():
     return get_random_bytes(32)  # AES-256 key size
 
 def load_key():
-    if not os.path.exists(KEY_FILE):
-        key = generate_key()
-        with open(KEY_FILE, "wb") as key_file:
-            key_file.write(key)
-    else:
-        with open(KEY_FILE, "rb") as key_file:
-            key = key_file.read()
-    return key
+    try:
+        if not os.path.exists(KEY_FILE):
+            key = generate_key()
+            with open(KEY_FILE, "wb") as key_file:
+                key_file.write(key)
+        else:
+            with open(KEY_FILE, "rb") as key_file:
+                key = key_file.read()
+        return key
+    except IOError as e:
+        print(f"Error loading encryption key: {str(e)}")
+        return None
 
 ENCRYPTION_KEY = load_key()
 
 def encrypt_message(message):
-    cipher = AES.new(ENCRYPTION_KEY, AES.MODE_GCM)
-    ciphertext, tag = cipher.encrypt_and_digest(pad(message.encode(), AES.block_size))
-    return base64.b64encode(cipher.nonce + tag + ciphertext).decode()
+    try:
+        cipher = AES.new(ENCRYPTION_KEY, AES.MODE_GCM)
+        ciphertext, tag = cipher.encrypt_and_digest(pad(message.encode(), AES.block_size))
+        return base64.b64encode(cipher.nonce + tag + ciphertext).decode()
+    except Exception as e:
+        print(f"Encryption error: {str(e)}")
+        return None
 
 def decrypt_message(encrypted_message):
-    data = base64.b64decode(encrypted_message.encode())
-    nonce, tag, ciphertext = data[:16], data[16:32], data[32:]
-    cipher = AES.new(ENCRYPTION_KEY, AES.MODE_GCM, nonce=nonce)
-    decrypted = unpad(cipher.decrypt_and_verify(ciphertext, tag), AES.block_size)
-    return decrypted.decode()
+    try:
+        data = base64.b64decode(encrypted_message.encode())
+        nonce, tag, ciphertext = data[:16], data[16:32], data[32:]
+        cipher = AES.new(ENCRYPTION_KEY, AES.MODE_GCM, nonce=nonce)
+        decrypted = unpad(cipher.decrypt_and_verify(ciphertext, tag), AES.block_size)
+        return decrypted.decode()
+    except Exception as e:
+        print(f"Decryption error: {str(e)}")
+        return None
 
 # Available settings in the menu
 AVAILABLE_SETTINGS = {
