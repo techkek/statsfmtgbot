@@ -24,23 +24,25 @@ SPOTIFY_CLIENT_SECRET = (
 HOST = (
     "<your_host_url>"  # URL of the server where the bot is hosted for the redirect URI
 )
-PORT = 8888 # Port for the Flask server
+PORT = 8888  # Port for the Flask server
 HOST_LOCAL = "localhost"  # Localhost URL for beta testing
 PORT_LOCAL = 8888  # Localhost port for beta testing
 
 SPOTIFY_REDIRECT_URI = (
-    'https://' + (HOST if ENV == 'production' else HOST_LOCAL) + "/callback"
+    "https://" + (HOST if ENV == "production" else (HOST_LOCAL + PORT_LOCAL)) + "/callback"
 )  # Redirect URI for the Spotify API, must be accessible from the internet if you are not hosting the bot locally
 
 # Telegram Bot settings
-TG_BOT_USERNAME = "statsfmtgbot" # Telegram Bot username
-TG_BOT_BETA_USERNAME = "statsfmtgbetabot" # Telegram Bot beta username
+TG_BOT_USERNAME = "statsfmtgbot"  # Telegram Bot username
+TG_BOT_BETA_USERNAME = "statsfmtgbetabot"  # Telegram Bot beta username
 
 # Encryption settings
 KEY_FILE = "./storage/encryption_key.key"  # Path to the encryption key file
 
+
 def generate_key():
     return get_random_bytes(32)  # AES-256 key size
+
 
 def load_key():
     try:
@@ -56,16 +58,21 @@ def load_key():
         print(f"Error loading encryption key: {str(e)}")
         return None
 
+
 ENCRYPTION_KEY = load_key()
+
 
 def encrypt_message(message):
     try:
         cipher = AES.new(ENCRYPTION_KEY, AES.MODE_GCM)
-        ciphertext, tag = cipher.encrypt_and_digest(pad(message.encode(), AES.block_size))
+        ciphertext, tag = cipher.encrypt_and_digest(
+            pad(message.encode(), AES.block_size)
+        )
         return base64.b64encode(cipher.nonce + tag + ciphertext).decode()
     except Exception as e:
         print(f"Encryption error: {str(e)}")
         return None
+
 
 def decrypt_message(encrypted_message):
     try:
@@ -77,6 +84,7 @@ def decrypt_message(encrypted_message):
     except Exception as e:
         print(f"Decryption error: {str(e)}")
         return None
+
 
 # Available settings in the menu
 AVAILABLE_SETTINGS = {

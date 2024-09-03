@@ -15,10 +15,7 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 def run_flask():
     try:
-        if ENV == "production":
-            flask_app.run(host=HOST, port=PORT)
-        else:
-            flask_app.run(host=HOST_LOCAL, port=PORT_LOCAL)
+        flask_app.run(host=HOST_LOCAL, port=PORT_LOCAL)
     except Exception as e:
         print(f"Flask error: {str(e)}")
         print(traceback.format_exc())

@@ -94,7 +94,10 @@ def register_commands(bot):
             bot.reply_to(message, get_text(lang, "spotify_callback_invalid"))
         except Exception as e:
             print(f"Error handling Spotify callback: {str(e)}")
-            bot.reply_to(message, get_text(lang, "spotify_callback_error"))
+            try:
+                bot.reply_to(message, get_text(lang, "spotify_callback_error"))
+            except Exception as e:
+                print(f"Error sending Spotify callback error: {str(e)}")
 
     @bot.callback_query_handler(
         func=lambda call: call.data.startswith(("toggle_", "edit_"))
@@ -153,14 +156,20 @@ def register_commands(bot):
                 )
             except Exception as e:
                 print(f"Error editing message reply markup: {str(e)}")
-                bot.edit_message_reply_markup(
-                    chat_id,
+                try:    
+                    bot.edit_message_reply_markup(
+                        chat_id,
                     call.message.message_id,
-                    reply_markup=call.message.reply_markup,
-                )
+                        reply_markup=call.message.reply_markup,
+                    )
+                except Exception as e:
+                    print(f"Error editing message reply markup: {str(e)}")
         except Exception as e:
             print(f"Error handling setting: {str(e)}")
-            bot.answer_callback_query(call.id, get_text(lang, "error_occurred"))
+            try:
+                bot.answer_callback_query(call.id, get_text(lang, "error_occurred"))
+            except Exception as e:
+                print(f"Error answering callback query: {str(e)}")
 
     def process_setting_input(message, setting_name):
         try:
@@ -176,7 +185,10 @@ def register_commands(bot):
             )
         except Exception as e:
             print(f"Error processing setting input: {str(e)}")
-            bot.send_message(chat_id, get_text(lang, "error_occurred"))
+            try:
+                bot.send_message(chat_id, get_text(lang, "error_occurred"))
+            except Exception as e:
+                print(f"Error sending error message: {str(e)}")
 
     @bot.message_handler(commands=["random_artist"])
     def send_random_artist(message):
@@ -230,7 +242,10 @@ def register_commands(bot):
                 bot.send_message(chat_id, response, parse_mode="Markdown")
         except Exception as e:
             print(f"Error sending random artist: {str(e)}")
-            bot.send_message(chat_id, get_text(lang, "error_occurred"))
+            try:
+                bot.send_message(chat_id, get_text(lang, "error_occurred"))
+            except Exception as e:
+                print(f"Error sending error message: {str(e)}")
 
     @bot.message_handler(commands=["random_album"])
     def send_random_album(message):
@@ -276,7 +291,10 @@ def register_commands(bot):
                 bot.send_message(chat_id, response, parse_mode="Markdown")
         except Exception as e:
             print(f"Error sending random album: {str(e)}")
-            bot.send_message(chat_id, get_text(lang, "error_occurred"))
+            try:
+                bot.send_message(chat_id, get_text(lang, "error_occurred"))
+            except Exception as e:
+                print(f"Error sending error message: {str(e)}")
 
     @bot.message_handler(commands=["random"])
     @bot.message_handler(func=lambda message: message.text.lower() == "random")
@@ -357,14 +375,23 @@ def register_commands(bot):
                         performer=track_info["artist"],
                     )
                 except requests.exceptions.RequestException:
-                    bot.reply_to(message, get_text(lang, "unable_to_download"))
+                    try:
+                        bot.reply_to(message, get_text(lang, "unable_to_download"))
+                    except Exception as e:
+                        print(f"Error sending unable to download message: {str(e)}")
                 except Exception as e:
                     print(f"Error sending random track: {str(e)}")
-                    bot.reply_to(message, get_text(lang, "error_occurred"))
+                    try:
+                        bot.reply_to(message, get_text(lang, "error_occurred"))
+                    except Exception as e:
+                        print(f"Error sending error message: {str(e)}")
 
         except Exception as e:
             print(f"Error sending random track: {str(e)}")
-            bot.send_message(chat_id, get_text(lang, "error_occurred"))
+            try:
+                bot.send_message(chat_id, get_text(lang, "error_occurred"))
+            except Exception as e:
+                print(f"Error sending error message: {str(e)}")
 
     @bot.callback_query_handler(
         func=lambda call: call.data.startswith("save_spotify_")
@@ -390,9 +417,12 @@ def register_commands(bot):
                 )
         except Exception as e:
             print(f"Error in save_to_spotify: {str(e)}")
-            bot.answer_callback_query(
-                call.id, "An error occurred while saving the track."
-            )
+            try:
+                bot.answer_callback_query(
+                    call.id, "An error occurred while saving the track."
+                )
+            except Exception as e:
+                print(f"Error answering callback query: {str(e)}")
 
     @bot.message_handler(commands=["random_genre"])
     def send_random_genre(message):
@@ -412,10 +442,12 @@ def register_commands(bot):
             try:
                 all_genres = get_all_items(username, "", "genres")
             except Exception as e:
-                print(f"Errore nel recupero dei generi: {str(e)}")
-                bot.delete_message(chat_id, temp_message.message_id)
-                bot.reply_to(message, get_text(lang, "error_occurred"))
-                return
+                print(f"Error in get_all_items: {str(e)}")
+                try:
+                    bot.delete_message(chat_id, temp_message.message_id)
+                    bot.reply_to(message, get_text(lang, "error_occurred"))
+                except Exception as e:
+                    print(f"Error sending error message: {str(e)}")
 
             if all_genres:
                 random_genre = random.choice(all_genres)
@@ -423,10 +455,13 @@ def register_commands(bot):
                     genre_info = format_item_info(random_genre, "genres", username)
                 except Exception as e:
                     print(
-                        f"Errore nella formattazione delle informazioni sul genere: {str(e)}"
+                        f"Error sending random genre: {str(e)}"
                     )
-                    bot.delete_message(chat_id, temp_message.message_id)
-                    bot.reply_to(message, get_text(lang, "error_occurred"))
+                    try:
+                        bot.delete_message(chat_id, temp_message.message_id)
+                        bot.reply_to(message, get_text(lang, "error_occurred"))
+                    except Exception as e:
+                        print(f"Error sending error message: {str(e)}")
                     return
 
                 response = f"[{genre_info['name'].capitalize()}](https://stats.fm/genre/{genre_info['name']})\n"
@@ -439,14 +474,26 @@ def register_commands(bot):
                     bot.delete_message(chat_id, temp_message.message_id)
                     bot.send_message(chat_id, response, parse_mode="Markdown")
                 except Exception as e:
-                    print(f"Errore nell'invio del messaggio: {str(e)}")
-                    bot.reply_to(message, get_text(lang, "error_occurred"))
+                    print(f"Error sending random genre: {str(e)}")
+                    try:
+                        bot.reply_to(message, get_text(lang, "error_occurred"))
+                    except Exception as e:
+                        print(f"Error sending error message: {str(e)}")
             else:
-                bot.delete_message(chat_id, temp_message.message_id)
-                bot.reply_to(message, get_text(lang, "no_genres_found"))
+                try:
+                    bot.delete_message(chat_id, temp_message.message_id)
+                    bot.reply_to(message, get_text(lang, "no_genres_found"))
+                except Exception as e:
+                    try:
+                        bot.reply_to(message, get_text(lang, "error_occurred"))
+                    except Exception as e:
+                        print(f"Error sending error message: {str(e)}")
         except Exception as e:
             print(f"Error in send_random_genre: {str(e)}")
-            bot.reply_to(message, get_text(lang, "error_occurred"))
+            try:
+                bot.reply_to(message, get_text(lang, "error_occurred"))
+            except Exception as e:
+                print(f"Error sending error message: {str(e)}")
 
     @bot.message_handler(commands=["language"])
     def set_language(message):
@@ -471,11 +518,14 @@ def register_commands(bot):
             else:
                 bot.reply_to(message, get_text(current_lang, "invalid_language"))
         except Exception as e:
-            print(f"Errore generale in set_language: {str(e)}")
-            bot.reply_to(
-                message,
-                get_text(get_user_language(message.chat.id), "error_occurred"),
-            )
+            print(f"General error in set_language: {str(e)}")
+            try:
+                bot.reply_to(
+                    message,
+                    get_text(get_user_language(message.chat.id), "error_occurred"),
+                )
+            except Exception as e:
+                print(f"Error sending error message: {str(e)}")
 
     @bot.message_handler(commands=["help"])
     def send_help(message):
@@ -490,7 +540,10 @@ def register_commands(bot):
             )
         except Exception as e:
             print(f"Error sending help: {str(e)}")
-            bot.reply_to(message, get_text(lang, "error_occurred"))
+            try:
+                bot.reply_to(message, get_text(lang, "error_occurred"))
+            except Exception as e:
+                print(f"Error sending error message: {str(e)}")
 
     @bot.message_handler(
         func=lambda message: message.text.lower().startswith(
@@ -567,7 +620,10 @@ def register_commands(bot):
             print(f"Error in send_top_items: {str(e)}")
             if ENV == "debug":
                 print(f"Traceback: {traceback.format_exc()}")
-            bot.reply_to(message, get_text(lang, "error_occurred"))
+            try:
+                bot.reply_to(message, get_text(lang, "error_occurred"))
+            except Exception as e:
+                print(f"Error sending error message: {str(e)}")
 
     @bot.message_handler(commands=["recommend"])
     def send_recommendations(message):
@@ -609,8 +665,11 @@ def register_commands(bot):
         except Exception as e:
             print(f"Error getting recommendations: {e}")
             print(f"Traceback: {traceback.format_exc()}")
-            bot.delete_message(chat_id, temp_message.message_id)
-            bot.reply_to(message, get_text(lang, "error_recommendations"))
+            try:
+                bot.delete_message(chat_id, temp_message.message_id)
+                bot.reply_to(message, get_text(lang, "error_recommendations"))
+            except Exception as e:
+                print(f"Error sending error message: {str(e)}")
 
     @bot.message_handler(commands=["github", "report", "feature", "question"])
     def handle_info_commands(message):
@@ -628,8 +687,58 @@ def register_commands(bot):
             )
         except Exception as e:
             print(f"Error handling {command} command: {str(e)}")
-            error_message = "An error occurred while processing your request. Please try again later."
-            bot.reply_to(message, error_message)
+            try:
+                bot.reply_to(message, get_text(lang, "error_occurred"))
+            except Exception as e:
+                print(f"Error sending error message: {str(e)}")
+    
+    @bot.message_handler(commands=["topalbumsyear"])
+    def handle_top_albums(message):
+        try:
+            chat_id = message.chat.id
+            lang = get_user_language(chat_id)
+            args = message.text.split()[1:]
+            
+            if not args:
+                bot.reply_to(message, get_text(lang, "specify_year"))
+                return
+            
+            year = args[0]
+            if not year.isdigit() or len(year) != 4:
+                bot.reply_to(message, get_text(lang, "invalid_year"))
+                return
+            
+            temp_message = bot.reply_to(message, get_text(lang, "fetching_top_albums"))
+            
+            username = get_user_setting(chat_id, "username", "")
+            if not username:
+                bot.delete_message(chat_id, temp_message.message_id)
+                bot.reply_to(message, get_text(lang, "set_username_first"))
+                return
+            
+            all_items = get_all_items(username, "lifetime", "albums")
+
+            top_albums = [album for album in all_items if album['date'].year == int(year)]
+            
+            if not top_albums:
+                bot.delete_message(chat_id, temp_message.message_id)
+                bot.reply_to(message, get_text(lang, "no_albums_found"))
+                return
+            
+            response = f"{get_text(lang, 'top_albums_year', year)}:\n\n"
+            for i, album in enumerate(top_albums[:10], 1):
+                response += f"{i}. [{album['name']}](https://stats.fm/album/{album['id']}) - [{album['artist']['name']}](https://stats.fm/artist/{album['artist']['id']}) - {album['streams']} streams\n"
+            
+            bot.delete_message(chat_id, temp_message.message_id)
+            send_long_message(bot, chat_id, response, parse_mode="Markdown")
+        except Exception as e:
+            print(f"Error sending top albums: {e}")
+            print(f"Traceback: {traceback.format_exc()}")
+            try:
+                bot.delete_message(chat_id, temp_message.message_id)
+                bot.reply_to(message, get_text(lang, "error_top_albums"))
+            except Exception as e:
+                print(f"Error sending error message: {str(e)}")
 
 
 def settings_menu(chat_id, lang):
@@ -659,6 +768,7 @@ def settings_menu(chat_id, lang):
                     )
             except Exception as e:
                 print(f"Error processing setting {setting_name}: {str(e)}")
+                return InlineKeyboardMarkup()
 
         return markup
     except Exception as e:

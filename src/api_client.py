@@ -298,6 +298,7 @@ def format_item_info(item, item_type, username):
                 else get_album_items(username, item["album"]["id"])[0]["artistIds"][0]
             ),
             "image": item["album"]["image"] if item["album"].get("image") else "N/A",
+            "date": datetime.fromtimestamp(item["album"]["releaseDate"] / 1000).date() if item["album"].get("releaseDate") else "N/A",
         }
     elif item_type == "artists":
         return {
